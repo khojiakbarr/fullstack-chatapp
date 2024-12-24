@@ -13,6 +13,8 @@ import { useEffect } from "react";
 
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
+import NotFoud from "./pages/NotFoud";
+import ForgotPass from "./pages/ForgotPass";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
@@ -24,7 +26,7 @@ const App = () => {
     checkAuth();
   }, [checkAuth]);
 
-  console.log({ authUser });
+  // console.log({ authUser });
 
   if (isCheckingAuth && !authUser)
     return (
@@ -54,7 +56,9 @@ const App = () => {
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
-        />
+        />{" "}
+        <Route path="/forgot" element={<ForgotPass />} />
+        <Route path="*" element={<NotFoud />} />
       </Routes>
 
       <Toaster />

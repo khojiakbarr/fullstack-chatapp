@@ -3,6 +3,9 @@ import {
   checkAuth,
   login,
   logout,
+  resetPassword,
+  sendCode,
+  sendEmail,
   signup,
   updateProfile,
 } from "../controllers/auth.controller.js";
@@ -13,6 +16,9 @@ const router = express.Router();
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/send-email", sendEmail);
+router.post("/check-code", sendCode);
+router.post("/change-password", resetPassword);
 
 router.put("/update-profile", protectRoute, updateProfile);
 

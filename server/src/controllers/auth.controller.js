@@ -2,6 +2,7 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import nodemailer from "nodemailer";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -115,6 +116,105 @@ export const checkAuth = (req, res) => {
     res.status(200).json(req.user);
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const sendEmail = async (req, res) => {
+  const randomNum = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000; // 4 digit random number
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User with this email does not exist" });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_ADDRESS,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_ADDRESS,
+      to: user.email,
+      subject: "Password Reset Code",
+      html: `<h2> Please do not give this code to anyone.</h2>\n\n 
+           <h1>Code:\n<b>${randomNum}</b></h1>`,
+    };
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { code: randomNum },
+      { new: true }
+    );
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Code sent to email" });
+  } catch (error) {
+    console.log("Error in sendEmail controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const sendCode = async (req, res) => {
+  const { email, code } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User with this email does not exist" });
+    }
+
+    if (user.code !== code) {
+      return res.status(400).json({ message: "Invalid code" });
+    }
+
+    res.status(200).json({ message: "Code verified" });
+  } catch (error) {
+    console.log("Error in sendCode controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const { code, password } = req.body;
+
+  try {
+    const user = await User.findOne({ code });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User with this code does not exist" });
+    }
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    if (user.code !== code) {
+      return res.status(400).json({ message: "Invalid code" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await User.findByIdAndUpdate(
+      user._id,
+      { password: hashedPassword, code: "" },
+      { new: true }
+    );
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (error) {
+    console.log("Error in resetPassword controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

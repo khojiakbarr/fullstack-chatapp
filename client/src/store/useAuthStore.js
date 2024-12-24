@@ -12,6 +12,12 @@ export const useAuthStore = create((set, get) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
+  isSended: false,
+  isSending: false, // jonatib yuborilmoqda
+  isHasBeenSent: false, // jonatib bolindi
+  isCheked: false, // chek bolindi
+  isSendPassword: false, // parolni o'zgartirildi
+  isAgain: false,
   onlineUsers: [],
   socket: null,
 
@@ -83,6 +89,53 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  sendCodeToEmail: async (data) => {
+    set({ isSending: true });
+    console.log(data);
+
+    try {
+      const res = await axiosInstance.post("/auth/send-email", data);
+      console.log(res);
+      set({ isHasBeenSent: true, isSended: true }); //! code send step
+      toast.success("Code has been sent to your email");
+    } catch (error) {
+      console.log("error in send code to email:", error);
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isSending: false });
+    }
+  },
+
+  sendCode: async (data) => {
+    set({ isSending: true });
+    console.log(data);
+    try {
+      const res = await axiosInstance.post("/auth/check-code", data);
+      toast.success(res.data.message);
+      set({ isHasBeenSent: false, isCheked: true, isAgain: false }); //! password send step
+    } catch (error) {
+      console.log("error in send code to email:", error);
+      toast.error(error.response.data.message);
+      set({ isAgain: true });
+    } finally {
+      set({ isSending: false });
+    }
+  },
+
+  sendPassword: async (data) => {
+    set({ isSending: true });
+    try {
+      const res = await axiosInstance.post("/auth/change-password", data);
+      toast.success(res.data.message);
+      window.history.back(); // !finished
+    } catch (error) {
+      console.log("error in change password:", error);
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isSending: false, isCheked: false, isSended: false });
+    }
+  },
+
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
@@ -100,6 +153,7 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: userIds });
     });
   },
+
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
   },
