@@ -6,6 +6,7 @@ import nodemailer from "nodemailer";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
+  console.log( "signUp: ", email, password);
   try {
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -52,6 +53,8 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  console.log( "login: ", email, password);
+
   try {
     const user = await User.findOne({ email });
 

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 const ForgotPass = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: "chinozbekov09@gmail.com",
+    email: "",
     code: "",
     password: "",
   });
